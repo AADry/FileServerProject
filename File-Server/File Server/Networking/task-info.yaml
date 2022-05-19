@@ -1,0 +1,140 @@
+type: edu
+files:
+- name: src/server/Main.java
+  visible: true
+  text: |-
+    package server;
+
+    import java.util.regex.Pattern;
+    import java.util.HashMap;
+    import java.util.Map;
+    import java.util.Scanner;
+
+    public class Main {
+        static Map<String,String> storage = new HashMap<String,String>();
+        public static void main(String[] args){
+            Scanner scanner = new Scanner(System.in);
+            String input = "start";
+            while(!input.equals("exit")){
+                input = scanner.nextLine();
+                Scanner wordParse = new Scanner(input);
+                String instruction = wordParse.next();
+                if(!instruction.equals("exit")) {
+                    String fileName = wordParse.next();
+                    // System.out.println(instruction);
+                    // System.out.println(fileName);
+                    receiveInstruction(instruction, fileName);
+                }
+            }
+        }
+        public static boolean checkInput(String instruction){
+            if(!instruction.equals("add") && !instruction.equals("exit") && !instruction.equals("delete")){
+                return false;
+            }else return true;
+        }
+        public static void receiveInstruction(String instruction,String filename){
+            if(instruction.equals("add")){
+                if(!storage.containsKey(filename) && Pattern.matches("^file[0-9]0?$",filename)) {
+                    storage.put(filename, "file");
+                    System.out.println("The file " + filename + " added successfully");
+                }else{
+                    System.out.println("Cannot add the file " + filename);
+                }
+            }
+            if(instruction.equals("delete")){
+                if(storage.containsKey(filename)){
+                    storage.remove(filename);
+                    System.out.println("The file " + filename + " was deleted");
+                }else{
+                    System.out.println("The file " + filename + " not found");
+                }
+            }
+            if(instruction.equals("get")){
+                if(!storage.containsKey(filename)){
+                    System.out.println("The file " + filename + " not found");
+                }else{
+                    System.out.println("The file " + filename + " was sent");
+                }
+            }
+        }
+    }
+  learner_created: false
+- name: test/FileServerTest.java
+  visible: false
+  text: |
+    import org.hyperskill.hstest.dynamic.input.DynamicTestingMethod;
+    import org.hyperskill.hstest.exception.outcomes.WrongAnswer;
+    import org.hyperskill.hstest.stage.StageTest;
+    import org.hyperskill.hstest.testcase.CheckResult;
+    import org.hyperskill.hstest.testing.TestedProgram;
+
+
+    public class FileServerTest extends StageTest<String> {
+
+        @DynamicTestingMethod
+        CheckResult test() throws InterruptedException {
+
+            TestedProgram client = new TestedProgram("client");
+            TestedProgram server = new TestedProgram("server");
+            server.setReturnOutputAfterExecution(true);
+
+            server.startInBackground();
+
+            Thread.sleep(1000);
+            String serverOutput = server.getOutput().trim();
+
+            String serverStartedMessage = "Server started!";
+            if (!serverOutput.equals(serverStartedMessage)) {
+                throw new WrongAnswer("Server output should be \"" + serverStartedMessage + "\" until the client connects!");
+            }
+
+            String clientOutput = client.start().trim();
+            serverOutput = server.getOutput().trim();
+
+            if (clientOutput.isEmpty()) {
+                return CheckResult.wrong("Client output shouldn't be empty!");
+            }
+
+            if (serverOutput.equals(serverStartedMessage)) {
+                return CheckResult.wrong("After the client connects to the server you should output the received data!");
+            }
+
+            if (!serverOutput.contains("Received: Give me everything you have!")) {
+                return CheckResult.wrong("Server output should contain \"Received: Give me everything you have!\"");
+            }
+
+            if (!serverOutput.contains("Sent: All files were sent!")) {
+                return CheckResult.wrong("Server output should contain \"Sent: All files were sent!\"");
+            }
+
+            if (serverOutput.indexOf("Sent: All files were sent!") < serverOutput.indexOf("Received: Give me everything you have!")) {
+                return CheckResult.wrong("The server should print \"Sent: All files were sent!\" only after " +
+                    "\"Received: Give me everything you have!\" was printed!");
+            }
+
+            if (!clientOutput.contains("Sent: Give me everything you have!")) {
+                return CheckResult.wrong("Client output should contain \"Sent: Give me everything you have!\"");
+            }
+
+            if (!clientOutput.contains("Received: All files were sent!")) {
+                return CheckResult.wrong("Client output should contain \"Received: All files were sent!\"");
+            }
+
+            if (clientOutput.indexOf("Received: All files were sent!") < clientOutput.indexOf("Sent: Give me everything you have!")) {
+                return CheckResult.wrong("The client should print \"Received: All files were sent!\" only after " +
+                    "\"Sent: Give me everything you have!\" was printed!");
+            }
+
+            return CheckResult.correct();
+        }
+    }
+  learner_created: false
+- name: src/client/Main.java
+  visible: true
+  learner_created: true
+feedback_link: https://hyperskill.org/learn/step/5426#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Thu, 14 Apr 2022 21:04:20 UTC
+record: 2
